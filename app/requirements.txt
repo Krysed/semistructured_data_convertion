@@ -4,3 +4,4 @@ motor
 pydantic
 jinja2
 httpx
+pyyaml

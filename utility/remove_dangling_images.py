@@ -19,17 +19,13 @@ def remove_dangling_images():
 
         print(f"Dangling images found:\n{image_ids}")
         print("Removing images...")
-
-        # Remove all dangling images
         subprocess.run(["docker", "rmi"] + image_ids, check=True)
         print("Successfully removed all dangling images.")
 
     except subprocess.CalledProcessError as e:
-        print("Error during Docker command execution:")
-        print(e.stderr)
+        print(f"Error during Docker command execution: {e.stderr}")
     except Exception as e:
-        print("Unexpected error:")
-        print(e)
+        print(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
     remove_dangling_images()

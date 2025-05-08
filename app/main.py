@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from fastapi import FastAPI, Body
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi import Request, Response
@@ -10,13 +10,9 @@ import logging
 import httpx
 import json
 import os
+import yaml
 
-
-class Item(BaseModel):
-    name: str
-    description: str
-
-XML_GEN_CONTAINER = "xml-gen" # <- container name
+XML_GEN_CONTAINER = "xml-gen"  # <- container name
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -52,11 +48,6 @@ async def read_root(request: Request):
 async def favicon():
     return {}
 
-@app.post("/items/")
-async def create_item(item: Item):
-    result = await collection.insert_one(item.model_dump())
-    return {"id": str(result.inserted_id), "status": "inserted"}
-
 @app.post("/generate_xml")
 async def generate_xml(
     num_of_records: int = Body(100),
@@ -68,7 +59,7 @@ async def generate_xml(
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "http://xml-gen:8001/generate",
+                f"http://{XML_GEN_CONTAINER}:8001/generate",  # Changed to use XML_GEN_CONTAINER
                 json={"num_of_records": num_of_records, "currency": currency}
             )
             logger.info("Response received from xml-gen.")
@@ -115,5 +106,21 @@ async def convert_xml_to_json():
             "message": f"Inserted {len(records)} records into MongoDB."
         }
     except Exception as e:
-        logger.exception("Failed to convert XML to JSON and insert to MongoDB.")
+        logger.exception("Failed to convert XML to JSON and insert into MongoDB.")
         return JSONResponse(status_code=500, content={"message": str(e)})
+
+@app.get("/download_yml")
+async def download_yml():
+    cursor = collection.find()
+    records = await cursor.to_list(length=100)
+
+    if not records:
+        return JSONResponse(status_code=404, content={"message": "No records found in MongoDB."})
+
+    yml_content = yaml.dump(records, default_flow_style=False)
+
+    return StreamingResponse(
+        iter([yml_content]),
+        media_type="application/x-yaml",
+        headers={"Content-Disposition": "attachment; filename=data.yml"}
+    )

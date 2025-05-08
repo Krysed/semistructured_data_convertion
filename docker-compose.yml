@@ -25,6 +25,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - ./secrets/secrets.json:/docker-entrypoint-initdb.d/db_config.json:ro
+      - ./mongodb/init_mongo.sh:/docker-entrypoint-initdb.d/init_mongo.sh:ro
     networks:
       - app_network
   

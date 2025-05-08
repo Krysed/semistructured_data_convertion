@@ -2,6 +2,7 @@
     <button id="generate-btn">Generate XML</button>
     <button id="load-xml-btn">Load XML</button>
     <button id="convert-btn">Convert to JSON</button>
+    <button id="download-yml-btn">Download YML</button>
     <button id="toggle-xml-btn" style="display:none;">Hide XML</button>
 
     <pre id="xml-display" style="border:1px solid #ccc; padding:10px; margin-top:10px; white-space: pre-wrap; background: #f9f9f9; max-height: 400px; overflow: auto; display: none;"></pre>
@@ -9,11 +10,18 @@
     <script>
         document.getElementById('generate-btn').addEventListener('click', function () {
             fetch('http://localhost:8000/generate_xml', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    num_of_records: 100,
+                    currency: 'PLN'
+                })
             })
                 .then(response => response.json())
                 .then(data => {
-                    alert(data.message);
+                    alert(data.message || "XML generated successfully.");
                 })
                 .catch(error => {
                     console.error("Error:", error);
@@ -63,6 +71,21 @@
                 .catch(error => {
                     console.error("Error:", error);
                     alert("There was an error converting XML to JSON.");
+                });
+        });
+
+        document.getElementById('download-yml-btn').addEventListener('click', function () {
+            fetch('http://localhost:8000/download_yml')
+                .then(response => response.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'data.yml';
+                    link.click();
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("There was an error downloading the YAML file.");
                 });
         });
     </script>

@@ -53,3 +53,5 @@ else
     cp -r "${SECRETS_DIR}" "app/${SECRETS_DIR}"
     cp -r "${SECRETS_DIR}" "mongodb/${SECRETS_DIR}"
 fi
+
+sudo apt-get install -y yq jq

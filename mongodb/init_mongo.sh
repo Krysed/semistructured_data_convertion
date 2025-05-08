@@ -6,7 +6,7 @@ CONFIG_FILE="/docker-entrypoint-initdb.d/db_config.json"
 USERNAME=$(jq -r .username "$CONFIG_FILE")
 PASSWORD=$(jq -r .password "$CONFIG_FILE")
 
-mongo <<EOF
+mongosh <<EOF
 use admin
 db.createUser({
   user: "$USERNAME",
