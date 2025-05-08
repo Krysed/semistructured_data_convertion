@@ -1,0 +1,49 @@
+services:
+  api:
+    build: ./app
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+      - xml_gen
+    volumes:
+      - ./app:/app
+      - ./secrets/secrets.json:/secrets.json:ro
+      # - shared_data:/app/data
+      - ./data:/app/data
+    environment:
+      - DB_CONFIG_PATH=/secrets.json
+    networks:
+      - app_network
+
+  mongodb:
+    build: ./mongodb
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./secrets/secrets.json:/docker-entrypoint-initdb.d/db_config.json:ro
+    networks:
+      - app_network
+  
+  xml_gen:
+    build: ./xml_gen
+    container_name: xml-gen
+    networks:
+      - app_network
+    ports:
+      - "8001:8001"
+    command: ["uvicorn", "xml_service:app", "--host", "0.0.0.0", "--port", "8001"]
+    volumes:
+      # - shared_data:/app/data
+      - ./data:/app/data
+
+volumes:
+  mongo-data:
+  shared_data:
+
+networks:
+  app_network:
+    driver: bridge

@@ -1,0 +1,69 @@
+<body>
+    <button id="generate-btn">Generate XML</button>
+    <button id="load-xml-btn">Load XML</button>
+    <button id="convert-btn">Convert to JSON</button>
+    <button id="toggle-xml-btn" style="display:none;">Hide XML</button>
+
+    <pre id="xml-display" style="border:1px solid #ccc; padding:10px; margin-top:10px; white-space: pre-wrap; background: #f9f9f9; max-height: 400px; overflow: auto; display: none;"></pre>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', function () {
+            fetch('http://localhost:8000/generate_xml', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("There was an error generating the XML file.");
+                });
+        });
+
+        document.getElementById('load-xml-btn').addEventListener('click', function () {
+            fetch('http://localhost:8000/get_xml')
+                .then(response => response.text())
+                .then(data => {
+                    const display = document.getElementById('xml-display');
+                    const toggleBtn = document.getElementById('toggle-xml-btn');
+
+                    display.textContent = data.trim() || "No XML file found.";
+                    display.style.display = "block";
+                    toggleBtn.style.display = "inline";
+                    toggleBtn.textContent = "Hide XML";
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    document.getElementById('xml-display').textContent = "Error loading XML file.";
+                });
+        });
+
+        document.getElementById('toggle-xml-btn').addEventListener('click', function () {
+            const display = document.getElementById('xml-display');
+            const toggleBtn = document.getElementById('toggle-xml-btn');
+
+            if (display.style.display === "none") {
+                display.style.display = "block";
+                toggleBtn.textContent = "Hide XML";
+            } else {
+                display.style.display = "none";
+                toggleBtn.textContent = "Show XML";
+            }
+        });
+
+        document.getElementById('convert-btn').addEventListener('click', function () {
+            fetch('http://localhost:8000/convert_xml_to_json', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || "XML converted to JSON and stored in MongoDB.");
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("There was an error converting XML to JSON.");
+                });
+        });
+    </script>
+</body>

@@ -1,0 +1,5 @@
+faker
+xmltodict
+fastapi 
+uvicorn 
+faker
