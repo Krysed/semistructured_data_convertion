@@ -1,5 +1,6 @@
 <body>
     <button id="generate-btn">Generate XML</button>
+    <input type="number" id="record-count" placeholder="Enter number of records" value="10000" />
     <button id="load-xml-btn">Load XML</button>
     <button id="convert-btn">Convert to JSON</button>
     <button id="download-yml-btn">Download YML</button>
@@ -9,24 +10,25 @@
 
     <script>
         document.getElementById('generate-btn').addEventListener('click', function () {
+            const numRecords = parseInt(document.getElementById('record-count').value) || 10000;
             fetch('http://localhost:8000/generate_xml', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    num_of_records: 10000,
+                    num_of_records: numRecords,
                     currency: 'PLN'
                 })
             })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message || "XML generated successfully.");
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("There was an error generating the XML file.");
-                });
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || "XML generated successfully.");
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error generating the XML file.");
+            });
         });
 
         document.getElementById('load-xml-btn').addEventListener('click', function () {

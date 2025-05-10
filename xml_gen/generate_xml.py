@@ -18,7 +18,6 @@ def generate_user_data(num_users: int, currency: str) -> dict:
             "email": fake.email(),
             "password": fake.password(),
             "role": random.choice(["user", "guest"]),
-            "bank":fake.bank(),
             "debt": round(random.uniform(1000, 100000), 2),
             "currency": currency,
         })

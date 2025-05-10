@@ -10,7 +10,6 @@ services:
     volumes:
       - ./app:/app
       - ./secrets/secrets.json:/secrets.json:ro
-      # - shared_data:/app/data
       - ./data:/app/data
     environment:
       - DB_CONFIG_PATH=/secrets.json
@@ -38,7 +37,6 @@ services:
       - "8001:8001"
     command: ["uvicorn", "xml_service:app", "--host", "0.0.0.0", "--port", "8001"]
     volumes:
-      # - shared_data:/app/data
       - ./data:/app/data
 
 volumes:
