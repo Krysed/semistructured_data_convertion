@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 class GenerationRequest(BaseModel):
-    num_of_records: int = 100
+    num_of_records: int = 10000
     currency: str = "PLN"
 
 @app.post("/generate")

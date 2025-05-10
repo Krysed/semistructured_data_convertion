@@ -50,7 +50,7 @@ async def favicon():
 
 @app.post("/generate_xml")
 async def generate_xml(
-    num_of_records: int = Body(100),
+    num_of_records: int = Body(10000),
     currency: str = Body("PLN")
 ):
     logger.info("Triggering XML generation on xml-gen container...")
@@ -112,7 +112,7 @@ async def convert_xml_to_json():
 @app.get("/download_yml")
 async def download_yml():
     cursor = collection.find()
-    records = await cursor.to_list(length=100)
+    records = await cursor.to_list(length=10000)
 
     if not records:
         return JSONResponse(status_code=404, content={"message": "No records found in MongoDB."})

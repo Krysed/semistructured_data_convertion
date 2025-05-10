@@ -11,10 +11,14 @@ def generate_user_data(num_users: int, currency: str) -> dict:
     users = []
     for _ in range(num_users):
         users.append({
+            "name": fake.name(),
+            "last_name": fake.last_name(),
             "username": fake.user_name(),
+            "date_of_birth": fake.date_of_birth(),
             "email": fake.email(),
             "password": fake.password(),
-            "role": random.choice(["admin", "user", "guest"]),
+            "role": random.choice(["user", "guest"]),
+            "bank":fake.bank(),
             "debt": round(random.uniform(1000, 100000), 2),
             "currency": currency,
         })
@@ -26,7 +30,7 @@ def save_to_xml(data: dict, filename: str):
     with open(filename, "w") as file:
         file.write(xml_data)
 
-def generate_and_save_xml(num_records=100, currency="PLN"):
+def generate_and_save_xml(num_records=10000, currency="PLN"):
     print(f"[DEBUG] Generating XML with {num_records} records and currency {currency}")
     data = generate_user_data(num_records, currency.upper())
     save_to_xml(data, "/app/data/generated_users.xml")
