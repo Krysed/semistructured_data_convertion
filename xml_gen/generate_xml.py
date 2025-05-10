@@ -1,5 +1,3 @@
-# generate_xml.py (inside xml_gen)
-
 from faker import Faker
 import xmltodict
 import random

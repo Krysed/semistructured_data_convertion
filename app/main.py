@@ -59,7 +59,7 @@ async def generate_xml(
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"http://{XML_GEN_CONTAINER}:8001/generate",  # Changed to use XML_GEN_CONTAINER
+                f"http://{XML_GEN_CONTAINER}:8001/generate",
                 json={"num_of_records": num_of_records, "currency": currency}
             )
             logger.info("Response received from xml-gen.")
