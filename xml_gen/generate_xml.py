@@ -3,13 +3,13 @@ import xmltodict
 import random
 import os
 
-fake = Faker()
+fake = Faker('pl_PL')
 
 def generate_user_data(num_users: int, currency: str) -> dict:
     users = []
     for _ in range(num_users):
         users.append({
-            "name": fake.name(),
+            "name": fake.first_name(),
             "last_name": fake.last_name(),
             "username": fake.user_name(),
             "date_of_birth": fake.date_of_birth(),
@@ -17,6 +17,7 @@ def generate_user_data(num_users: int, currency: str) -> dict:
             "password": fake.password(),
             "role": random.choice(["user", "guest"]),
             "debt": round(random.uniform(1000, 100000), 2),
+            "city": fake.city(),
             "currency": currency,
         })
     return {"root": {"user": users}}
