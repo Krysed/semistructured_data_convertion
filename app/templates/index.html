@@ -5,26 +5,44 @@
     <button id="convert-btn">Convert to JSON</button>
     <button id="download-yml-btn">Download YML</button>
     <button id="toggle-xml-btn" style="display:none;">Hide XML</button>
-
+    <button id="query-debt-btn">Query Debt by City</button>
+    <button id="top-debt-btn">Show Top Cities by Debt</button>
     <pre id="xml-display" style="border:1px solid #ccc; padding:10px; margin-top:10px; white-space: pre-wrap; background: #f9f9f9; max-height: 400px; overflow: auto; display: none;"></pre>
+    <div id="loading-indicator" style="display: none; padding: 10px; background: #f4f4f4; border: 1px solid #ccc; margin-top: 10px;">
+        <span>Loading...</span>
+    </div>
+    <table id="debt-table" style="margin-top: 20px; border-collapse: collapse; width: 100%; display: none;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ccc; padding: 8px;">City</th>
+                <th style="border: 1px solid #ccc; padding: 8px;">Total Debt</th>
+            </tr>
+        </thead>
+        <tbody id="debt-table-body"></tbody>
+    </table>
+    <button id="query-all-btn">Show All Records</button>
 
+    <!-- placeholder table -->
+    <table id="all-records-table"
+           style="margin-top:20px; border-collapse:collapse; width:100%; display:none;">
+      <thead>
+        <tr>
+          <!-- will be filled dynamically -->
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    
     <script>
         document.getElementById('generate-btn').addEventListener('click', function () {
             const numRecords = parseInt(document.getElementById('record-count').value) || 10000;
             fetch('http://localhost:8000/generate_xml', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    num_of_records: numRecords,
-                    currency: 'PLN'
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ num_of_records: numRecords, currency: 'PLN' })
             })
             .then(response => response.json())
-            .then(data => {
-                alert(data.message || "XML generated successfully.");
-            })
+            .then(data => alert(data.message || "XML generated successfully."))
             .catch(error => {
                 console.error("Error:", error);
                 alert("There was an error generating the XML file.");
@@ -37,7 +55,6 @@
                 .then(data => {
                     const display = document.getElementById('xml-display');
                     const toggleBtn = document.getElementById('toggle-xml-btn');
-
                     display.textContent = data.trim() || "No XML file found.";
                     display.style.display = "block";
                     toggleBtn.style.display = "inline";
@@ -52,7 +69,6 @@
         document.getElementById('toggle-xml-btn').addEventListener('click', function () {
             const display = document.getElementById('xml-display');
             const toggleBtn = document.getElementById('toggle-xml-btn');
-
             if (display.style.display === "none") {
                 display.style.display = "block";
                 toggleBtn.textContent = "Hide XML";
@@ -63,13 +79,9 @@
         });
 
         document.getElementById('convert-btn').addEventListener('click', function () {
-            fetch('http://localhost:8000/convert_xml_to_json', {
-                method: 'POST'
-            })
+            fetch('http://localhost:8000/convert_xml_to_json', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => {
-                    alert(data.message || "XML converted to JSON and stored in MongoDB.");
-                })
+                .then(data => alert(data.message || "XML converted to JSON and stored in MongoDB."))
                 .catch(error => {
                     console.error("Error:", error);
                     alert("There was an error converting XML to JSON.");
@@ -90,5 +102,126 @@
                     alert("There was an error downloading the YAML file.");
                 });
         });
+        document.getElementById('top-debt-btn').addEventListener('click', function () {
+            fetch('http://localhost:8000/stats/top_cities_by_debt')
+                .then(response => response.json())
+                .then(responseData => {
+                    const data = responseData.data;
+                    const table = document.getElementById('debt-table');
+                    const tbody = table.querySelector('tbody');
+                    tbody.innerHTML = '';
+
+                    if (Array.isArray(data)) {
+                        data.forEach(row => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td style="border: 1px solid #ccc; padding: 8px;">${row._id}</td>
+                                <td style="border: 1px solid #ccc; padding: 8px;">${row.total_debt.toFixed(2)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                        table.style.display = "table";
+                    } else {
+                        alert("No data returned.");
+                        table.style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Failed to fetch city debt stats.");
+                });
+        });
+        document.getElementById('query-debt-btn').addEventListener('click', function () {
+            document.getElementById('loading-indicator').style.display = 'block';
+
+            fetch('http://localhost:8000/stats/top_cities_by_debt')
+                .then(response => response.json())
+                .then(responseData => {
+                    document.getElementById('loading-indicator').style.display = 'none';
+
+                    const data = responseData.data;
+                    const tableBody = document.getElementById('debt-table-body');
+                    tableBody.innerHTML = '';
+
+                    if (Array.isArray(data) && data.length) {
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            const cityCell = document.createElement('td');
+                            const debtCell = document.createElement('td');
+                            cityCell.textContent = item._id;
+                            debtCell.textContent = item.total_debt.toFixed(2);
+                            row.appendChild(cityCell);
+                            row.appendChild(debtCell);
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        const row = document.createElement('tr');
+                        const noDataCell = document.createElement('td');
+                        noDataCell.colSpan = 2;
+                        noDataCell.textContent = 'No data available';
+                        row.appendChild(noDataCell);
+                        tableBody.appendChild(row);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    console.error("Error:", error);
+                    alert("There was an error fetching the debt data.");
+                });
+        });
+        document.getElementById('query-all-btn').addEventListener('click', async () => {
+            try {
+                console.log("Fetching all records...");
+                const resp = await fetch('http://localhost:8000/stats/all_records');
+                const payload = await resp.json();
+
+                if (payload.status !== 'success' || !Array.isArray(payload.data)) {
+                    console.error("Unexpected response:", payload);
+                    alert("Failed to fetch records.");
+                    return;
+                }
+
+                console.log("All records:", payload.data);
+
+                const table = document.getElementById('all-records-table');
+                const thead = table.querySelector('thead tr');
+                const tbody = table.querySelector('tbody');
+
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+
+                if (payload.data.length === 0) {
+                    alert("No records in database.");
+                    table.style.display = 'none';
+                    return;
+                }
+
+                const columns = Object.keys(payload.data[0]);
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    th.style = 'border:1px solid #ccc; padding:8px;';
+                    thead.appendChild(th);
+                });
+
+                payload.data.forEach(doc => {
+                    const tr = document.createElement('tr');
+                    columns.forEach(col => {
+                        const td = document.createElement('td');
+                        td.textContent = doc[col];
+                        td.style = 'border:1px solid #ccc; padding:8px;';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+
+                table.style.display = 'table';
+
+            } catch (err) {
+                console.error("Error fetching all records:", err);
+                alert("Error loading records – check console for details.");
+            }
+        });
+
     </script>
 </body>

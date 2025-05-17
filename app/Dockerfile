@@ -2,10 +2,11 @@ FROM python:alpine
 
 WORKDIR /app
 
-COPY requirements.txt .
-
 RUN apk add --no-cache curl py3-pip bash &&\ 
     pip install docker
+
+COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

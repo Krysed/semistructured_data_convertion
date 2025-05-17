@@ -1,18 +1,24 @@
 import xml.etree.ElementTree as ET
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
-from fastapi import FastAPI, Body
+from pymongo import ASCENDING
+from fastapi import FastAPI, Body, APIRouter, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi import Request, Response
+from typing import Any
 import logging
 import httpx
 import json
 import os
 import yaml
 
-XML_GEN_CONTAINER = "xml-gen"  # <- container name
+XML_GEN_CONTAINER = "xml-gen"  # <- container nam
+
+class CityDebt(BaseModel):
+    _id: str
+    total_debt: float
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -32,6 +38,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client["mydatabase"]
 collection = db["mycollection"]
 
+router = APIRouter()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -124,3 +131,46 @@ async def download_yml():
         media_type="application/x-yaml",
         headers={"Content-Disposition": "attachment; filename=data.yml"}
     )
+
+@router.get("/top_cities_by_debt")
+async def top_cities_by_debt() -> dict[str, Any]:
+    try:
+        pipeline = [
+            {"$match": {"currency": "PLN"}},
+            {"$project": {"city": 1, "debt": {"$toDouble": "$debt"}}},
+            {"$group": {"_id": "$city", "total_debt": {"$sum": "$debt"}}},
+            {"$sort": {"total_debt": -1}},
+            {"$limit": 10}
+        ]
+
+        cursor = collection.aggregate(pipeline)
+        result = await cursor.to_list(length=100)
+
+        if not result:
+            raise HTTPException(status_code=404, detail="No records found.")
+
+        return {
+            "status": "success",
+            "data": result  # note: uses _id, which frontend expects
+        }
+
+    except Exception as e:
+        logger.exception("Failed to fetch total debt by city.")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/all_records")
+async def all_records():
+    """
+    Fetch _all_ documents from MongoDB and return them as JSON.
+    """
+    try:
+        cursor = collection.find()
+        records = await cursor.to_list(length=None)
+        for r in records:
+            r["id"] = str(r.pop("_id"))
+        return {"status": "success", "data": records}
+    except Exception as e:
+        logger.exception("Failed to fetch all records.")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+app.include_router(router, prefix="/stats")
