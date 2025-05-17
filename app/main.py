@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi import Request, Response
-from typing import Optional, List, Any
+from typing import Any
 import logging
 import httpx
 import json
@@ -158,19 +158,6 @@ async def top_cities_by_debt() -> dict[str, Any]:
         logger.exception("Failed to fetch total debt by city.")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-# @app.get("/stats/top_cities_by_debt")
-# async def top_cities_by_debt():
-#     # Mock data, replace with actual DB query
-#     sample_data = [
-#         {"_id": "Warsaw", "total_debt": 123456.78},
-#         {"_id": "Krakow", "total_debt": 98765.43},
-#         {"_id": "Gdansk", "total_debt": 65432.10},
-#     ]
-#     return {
-#         "status": "success",
-#         "data": sample_data
-#     }
-
 @router.get("/all_records")
 async def all_records():
     """
@@ -178,8 +165,7 @@ async def all_records():
     """
     try:
         cursor = collection.find()
-        records = await cursor.to_list(length=None)  # None = no limit
-        # strip out Mongo’s internal _id ObjectId if you prefer strings
+        records = await cursor.to_list(length=None)
         for r in records:
             r["id"] = str(r.pop("_id"))
         return {"status": "success", "data": records}
