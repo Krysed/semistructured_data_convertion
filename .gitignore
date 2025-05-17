@@ -3,3 +3,7 @@ __pycache__
 secrets/
 data
 tmp/
+app/js
+app/css
+app/fonts
+app/images
