@@ -5,6 +5,11 @@ set -euo pipefail
 VENV_DIR=".venv"
 REQUIREMENTS_FILES=$(find . -type f -name "requirements.txt")
 SECRETS_DIR="secrets"
+HOME_DIR=$(pwd)
+ZIP_DIRECTORY_NAME="2135_mini_finance"
+ZIP_NAME="${ZIP_DIRECTORY_NAME}.zip"
+TEMPLATE_LINK="https://www.tooplate.com/zip-templates/${ZIP_NAME}"
+NGINX_STATIC_DIR="$HOME_DIR/nginx/static"
 
 # shellcheck disable=SC2181
 if [[ $? -ne 0 ]] && [[ $1 != "source" ]]; then
@@ -55,3 +60,20 @@ else
 fi
 
 sudo apt-get install -y yq jq
+
+if [[ ! -d "tmp" ]]; then
+    mkdir tmp
+else
+    if [[ -f "${HOME_DIR}/tmp/${ZIP_NAME}" ]];then
+        rm "${HOME_DIR}/tmp/${ZIP_NAME}"
+    fi
+fi
+
+cd tmp && wget "${TEMPLATE_LINK}"
+cd "${ZIP_DIRECTORY_NAME}"
+cp -r "js/" "${NGINX_STATIC_DIR}/" 
+cp -r "css/" "${NGINX_STATIC_DIR}/" 
+cp -r "fonts/" "${NGINX_STATIC_DIR}/" 
+cp -r "images/" "${NGINX_STATIC_DIR}/" 
+rm -rf "${ZIP_DIRECTORY_NAME}"
+cd "${HOME_DIR}"

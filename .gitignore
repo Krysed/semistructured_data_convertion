@@ -3,3 +3,7 @@ __pycache__
 secrets/
 data
 tmp/
+nginx/static/js
+nginx/static/css
+nginx/static/fonts
+nginx/static/images
