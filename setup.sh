@@ -9,7 +9,7 @@ HOME_DIR=$(pwd)
 ZIP_DIRECTORY_NAME="2135_mini_finance"
 ZIP_NAME="${ZIP_DIRECTORY_NAME}.zip"
 TEMPLATE_LINK="https://www.tooplate.com/zip-templates/${ZIP_NAME}"
-PYTHON_APP_DIR="$HOME_DIR/app"
+NGINX_STATIC_DIR="$HOME_DIR/nginx/static"
 
 # shellcheck disable=SC2181
 if [[ $? -ne 0 ]] && [[ $1 != "source" ]]; then
@@ -71,9 +71,9 @@ fi
 
 cd tmp && wget "${TEMPLATE_LINK}"
 cd "${ZIP_DIRECTORY_NAME}"
-cp -r "js/" "${PYTHON_APP_DIR}/" 
-cp -r "css/" "${PYTHON_APP_DIR}/" 
-cp -r "fonts/" "${PYTHON_APP_DIR}/" 
-cp -r "images/" "${PYTHON_APP_DIR}/" 
+cp -r "js/" "${NGINX_STATIC_DIR}/" 
+cp -r "css/" "${NGINX_STATIC_DIR}/" 
+cp -r "fonts/" "${NGINX_STATIC_DIR}/" 
+cp -r "images/" "${NGINX_STATIC_DIR}/" 
 rm -rf "${ZIP_DIRECTORY_NAME}"
 cd "${HOME_DIR}"

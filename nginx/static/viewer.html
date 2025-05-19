@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold text-green-600 mb-6 text-center">Data viewer</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <button id="toggle-xml-btn" class="bg-indigo-500 text-white px-4 py-2 rounded-xl hover:bg-indigo-600 transition w-full">
+        Pokaż XML
+      </button>
+
+      <button id="query-debt-btn" class="bg-rose-500 text-white px-4 py-2 rounded-xl hover:bg-rose-600 transition w-full">
+        Zadłużenie wg miasta
+      </button>
+
+      <button id="top-debt-btn" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition w-full">
+        Top miasta wg długu
+      </button>
+
+      <button id="query-all-btn" class="bg-slate-600 text-white px-4 py-2 rounded-xl hover:bg-slate-700 transition w-full">
+        Wszystkie rekordy
+      </button>
+    </div>
+
+    <div id="loading-indicator" class="mb-4 hidden p-4 bg-yellow-100 border border-yellow-400 rounded-xl text-center">
+      <span class="text-yellow-700 font-medium">Ładowanie...</span>
+    </div>
+
+    <pre id="xml-display" class="hidden bg-white border border-gray-300 p-4 rounded-xl whitespace-pre-wrap max-h-96 overflow-auto mb-6"></pre>
+
+    <div class="overflow-auto">
+      <table id="debt-table" class="hidden w-full text-left border border-gray-300 mb-6">
+        <thead class="bg-blue-100 text-blue-800 font-semibold">
+          <tr><th class="border border-gray-300 p-2">Miasto</th><th class="border border-gray-300 p-2">Suma długu</th></tr>
+        </thead>
+        <tbody id="debt-table-body"></tbody>
+      </table>
+
+      <table id="all-records-table" class="hidden w-full text-left border border-gray-300 mb-6">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let xmlLoaded = false;
+    document.getElementById('toggle-xml-btn').addEventListener('click', function () {
+      const display = document.getElementById('xml-display');
+      const toggleBtn = this;
+
+      if (!xmlLoaded) {
+        fetch('/api/get_xml')
+          .then(res => res.text())
+          .then(data => {
+            display.textContent = data.trim() || "Brak XML";
+            display.style.display = "block";
+            toggleBtn.textContent = "Ukryj XML";
+            xmlLoaded = true;
+          })
+          .catch(() => {
+            display.textContent = "Błąd ładowania XML";
+            display.style.display = "block";
+            toggleBtn.textContent = "Ukryj XML";
+          });
+      } else {
+        const isVisible = display.style.display !== "none";
+        display.style.display = isVisible ? "none" : "block";
+        toggleBtn.textContent = isVisible ? "Pokaż XML" : "Ukryj XML";
+      }
+    });
+
+    document.getElementById('top-debt-btn').addEventListener('click', function () {
+      fetch('/api/stats/top_cities_by_debt')
+        .then(res => res.json())
+        .then(resp => {
+          const data = resp.data;
+          const tbody = document.getElementById('debt-table-body');
+          tbody.innerHTML = '';
+          if (Array.isArray(data)) {
+            data.forEach(row => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td class="border p-2">${row._id}</td><td class="border p-2">${row.total_debt.toFixed(2)}</td>`;
+              tbody.appendChild(tr);
+            });
+            document.getElementById('debt-table').style.display = "table";
+          } else {
+            alert("Brak danych");
+          }
+        })
+        .catch(() => alert("Błąd ładowania danych"));
+    });
+
+    document.getElementById('query-debt-btn').addEventListener('click', function () {
+      document.getElementById('loading-indicator').style.display = 'block';
+      fetch('/api/stats/top_cities_by_debt')
+        .then(res => res.json())
+        .then(resp => {
+          document.getElementById('loading-indicator').style.display = 'none';
+          const tbody = document.getElementById('debt-table-body');
+          const data = resp.data;
+          tbody.innerHTML = '';
+          if (Array.isArray(data)) {
+            data.forEach(item => {
+              const row = document.createElement('tr');
+              row.innerHTML = `<td class="border p-2">${item._id}</td><td class="border p-2">${item.total_debt.toFixed(2)}</td>`;
+              tbody.appendChild(row);
+            });
+            document.getElementById('debt-table').style.display = "table";
+          }
+        })
+        .catch(() => {
+          document.getElementById('loading-indicator').style.display = 'none';
+          alert("Błąd zapytania");
+        });
+    });
+
+    document.getElementById('query-all-btn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/stats/all_records');
+        const data = await res.json();
+        if (data.status !== 'success' || !Array.isArray(data.data)) {
+          alert("Błąd danych");
+          return;
+        }
+        const table = document.getElementById('all-records-table');
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+        const columns = Object.keys(data.data[0]);
+        columns.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col;
+          th.className = 'border p-2';
+          thead.appendChild(th);
+        });
+        data.data.forEach(doc => {
+          const tr = document.createElement('tr');
+          columns.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = doc[col];
+            td.className = 'border p-2';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.style.display = 'table';
+      } catch {
+        alert("Błąd ładowania rekordów");
+      }
+    });
+  </script>
+</body>
+</html>
