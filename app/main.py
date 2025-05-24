@@ -100,7 +100,19 @@ async def top_cities_by_debt() -> dict[str, Any]:
 @stats_router.get("/all_records")
 async def all_records():
     try:
-        records = await collection.find().to_list(length=None)
+        projection = {
+            "first_name": 1,
+            "last_name": 1,
+            "date_of_birth": 1,
+            "email": 1,
+            "debt": 1,
+            "city": 1,
+            "currency": 1,
+            "_id": 1
+        }
+        
+        records = await collection.find({}, projection).to_list(length=None)
+        
         for r in records:
             r["id"] = str(r.pop("_id"))
         return {"status": "success", "data": records}
