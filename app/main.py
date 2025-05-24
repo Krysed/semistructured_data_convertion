@@ -115,7 +115,6 @@ async def all_records():
         
         for r in records:
             r["id"] = str(r.pop("_id"))
-        
         return {"status": "success", "data": records}
     except Exception as e:
         logger.exception("Failed to fetch all records.")
